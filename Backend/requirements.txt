@@ -1,10 +1,10 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
 python-dotenv
 pydantic
 passlib[bcrypt]
-python-jose[cryptography]
+bcrypt
+PyJWT
 python-multipart
 psycopg2-binary
-

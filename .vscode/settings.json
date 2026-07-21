@@ -10,6 +10,8 @@
     "pydantic",
     "passlib",
     "psycopg",
-    "dotenv"
+    "dotenv",
+    "bcrypt",
+    "pyjwt"
   ]
 }
