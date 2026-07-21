@@ -1,6 +1,5 @@
 from datetime import timedelta
 from warnings import deprecated
-from Backend import schemas
 import os
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
