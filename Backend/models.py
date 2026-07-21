@@ -4,7 +4,10 @@ from sqlalchemy import Column, DateTime, String, ForeignKey
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import relationship
 
-from .database import Base, engine
+try:
+    from .database import Base, engine
+except ImportError:
+    from database import Base, engine
 
 
 class UserDB(Base):

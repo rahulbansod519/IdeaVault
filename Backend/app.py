@@ -12,9 +12,14 @@ import uuid
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
-from .database import get_db
-from .models import IdeaDB, UserDB
-from .schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token
+try:
+    from .database import get_db
+    from .models import IdeaDB, UserDB
+    from .schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token
+except ImportError:
+    from database import get_db
+    from models import IdeaDB, UserDB
+    from schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token
 # pyrefly: ignore [missing-import]
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # pyrefly: ignore [missing-import]
