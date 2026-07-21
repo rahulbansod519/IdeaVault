@@ -23,7 +23,7 @@ except ImportError:
 # pyrefly: ignore [missing-import]
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # pyrefly: ignore [missing-import]
-from passlib.context import CryptContext
+import bcrypt
 # pyrefly: ignore [missing-import]
 import jwt
 # pyrefly: ignore [missing-import]
@@ -36,8 +36,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 if not SECRET_KEY:
     raise ValueError("No JWT Secret Key Found")
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -64,12 +62,13 @@ else:
     )
 
 def get_password_hash(password: str) -> str:
-    truncated = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.hash(truncated)
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    truncated = plain_password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.verify(truncated, hashed_password)
+    pwd_bytes = plain_password.encode("utf-8")[:72]
+    return bcrypt.checkpw(pwd_bytes, hashed_password.encode("utf-8"))
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
