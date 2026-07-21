@@ -5,8 +5,8 @@ export function IdeaFeed({ ideas = [], onUpdate, onDelete }: any) {
 
   return (
     <div>
-      {ideas.map((idea: any) => (
-        <IdeaCard key={idea.id} idea={idea} onUpdate={onUpdate} onDelete={onDelete} />
+      {ideas.map((idea: any, index: number) => (
+        <IdeaCard key={idea.id || index} idea={idea} onUpdate={onUpdate} onDelete={onDelete} />
       ))}
     </div>
   );

@@ -42,9 +42,10 @@ export default function App() {
   const addIdea = async (rawNotes: string) => {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ raw_notes: rawNotes })
     });
+    if (!response.ok) return;
     const newIdea = await response.json();
     setIdeas([...ideas, newIdea]); // Add the new idea to our screen immediately
   };
@@ -53,16 +54,21 @@ export default function App() {
   const updateIdea = async (id: string, updateData: any) => {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify(updateData)
     });
+    if (!response.ok) return;
     const updatedIdea = await response.json();
     setIdeas(ideas.map((idea: any) => (idea.id === id ? updatedIdea : idea)));
   };
 
   // DELETE Request
   const deleteIdea = async (id: string) => {
-    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders
+    });
+    if (!response.ok) return;
     setIdeas(ideas.filter((idea: any) => idea.id !== id));
   };
 
