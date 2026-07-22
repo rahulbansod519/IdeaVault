@@ -14,12 +14,12 @@ from sqlalchemy.orm import Session
 
 try:
     from .database import get_db
-    from .models import IdeaDB, UserDB
-    from .schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token
+    from .models import IdeaDB, UserDB, CommentsDB
+    from .schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token, CommentCreate, CommentResponse
 except ImportError:
     from database import get_db
-    from models import IdeaDB, UserDB
-    from schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token
+    from models import IdeaDB, UserDB, CommentsDB
+    from schemas import IdeaCreate, IdeaUpdate, Idea, UserCreate, Token, CommentCreate, CommentResponse
 # pyrefly: ignore [missing-import]
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 # pyrefly: ignore [missing-import]
@@ -108,7 +108,8 @@ def create_idea(idea_in: IdeaCreate, db: Session = Depends(get_db), current_user
         status = "noted",
         created_at = now,
         updated_at = now,
-        user_id = current_user.id
+        user_id = current_user.id,
+        is_public = idea_in.is_public
     )
 
     db.add(new_idea)
@@ -143,6 +144,7 @@ def delete_idea(idea_id: str, db: Session = Depends(get_db), current_user: UserD
     if not existing_idea:
         raise HTTPException(status_code=404, detail="Idea Not Found")
     
+    db.query(CommentsDB).filter(CommentsDB.idea_id == idea_id).delete()
     db.delete(existing_idea)
     db.commit()
     return {"message": "Idea Deleted"}
@@ -185,3 +187,38 @@ def login_for_access_token(
     access_token = create_access_token(data={"sub": user.id})
     
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/ideas/public", response_model=list[Idea])
+def get_public_ideas(db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+    return db.query(IdeaDB).filter(IdeaDB.is_public == True).all()
+
+
+@app.post("/ideas/{idea_id}/comments", response_model=CommentResponse)
+def add_comment(idea_id: str, comment_in: CommentCreate, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+    idea = db.query(IdeaDB).filter(IdeaDB.id == idea_id).first()
+    if not idea:
+        raise HTTPException(status_code=404, detail="Idea Not Found")
+    if not idea.is_public and idea.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can not comment on private posts")
+
+    new_comment = CommentsDB(
+        id = str(uuid.uuid4()),
+        content = comment_in.content,
+        user_id = current_user.id,
+        idea_id=idea_id
+        
+    )
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+    return new_comment
+
+@app.get("/ideas/{idea_id}/comments", response_model=list[CommentResponse])
+def get_all_comments(idea_id: str, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+    idea = db.query(IdeaDB).filter(IdeaDB.id == idea_id).first()
+    if not idea:
+        raise HTTPException(status_code=404, detail="Idea Not Found")
+    if not idea.is_public and idea.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can not view comments on private posts")
+
+    return db.query(CommentsDB).filter(CommentsDB.idea_id == idea_id).all()
